@@ -10,11 +10,14 @@ config = {
     "password": os.getenv("DB_PASSWORD"),
     "host": os.getenv("DB_HOST", "localhost"),
     "database": os.getenv("DB_DATABASE", "oficina_mjp"),
-    "port": int(os.getenv("DB_PORT", "4000")),  # TiDB Cloud usa porta 4000 por padrão
+    "port": int(os.getenv("DB_PORT", "4000")),
     "autocommit": os.getenv("DB_AUTOCOMMIT", "True").lower() == "true",
-    "ssl_disabled": False,  # Habilita SSL/TLS
-    "ssl_verify_cert": False,  # Desabilitar verificação de cert em Vercel (serverless não tem CA paths)
-    "ssl_verify_identity": False  # Desabilitar verificação de identidade em Vercel
+    "ssl_disabled": False,
+    "ssl_verify_cert": False,
+    "ssl_verify_identity": False,
+    "connect_timeout": 30,
+    "pool_size": 1,
+    "pool_reset_session": False
 }
 
 # Remover valores None do config
