@@ -2,8 +2,32 @@ from flask import Blueprint, jsonify, request
 from connection import get_connection
 from datetime import datetime
 import bcrypt
+import os
 
 dashboard_bp = Blueprint("dashboard", __name__)
+
+# =====================================================
+# ENDPOINTS DE SISTEMA
+# =====================================================
+@dashboard_bp.route("/", methods=["GET"])
+def index():
+    return jsonify({"message": "MJP Oficina API", "status": "online"}), 200
+
+@dashboard_bp.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok", "message": "API funcionando"}), 200
+
+@dashboard_bp.route("/debug", methods=["GET"])
+def debug():
+    """Endpoint para debug - verificar variáveis de ambiente"""
+    env_vars = {
+        "DB_HOST": os.getenv("DB_HOST", "NOT_SET"),
+        "DB_USER": os.getenv("DB_USER", "NOT_SET"),
+        "DB_PASSWORD": "***" if os.getenv("DB_PASSWORD") else "NOT_SET",
+        "DB_DATABASE": os.getenv("DB_DATABASE", "NOT_SET"),
+        "DB_PORT": os.getenv("DB_PORT", "NOT_SET"),
+    }
+    return jsonify(env_vars), 200
 
 # =====================================================
 # FUNÇÕES DE SEGURANÇA
@@ -21,13 +45,17 @@ def verify_password(password, hashed_password):
 # =====================================================
 @dashboard_bp.route("/oficinas", methods=["GET"])
 def listar_oficinas():
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT id, nome, cnpj, telefone, email, endereco, created_at FROM oficinas ORDER BY nome")
-    dados = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return jsonify(dados)
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id, nome, cnpj, telefone, email, endereco, created_at FROM oficinas ORDER BY nome")
+        dados = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(dados)
+    except Exception as e:
+        print(f"Erro ao listar oficinas: {str(e)}")
+        return jsonify({"erro": f"Erro ao listar oficinas: {str(e)}"}), 500
 
 @dashboard_bp.route("/oficinas", methods=["POST"])
 def criar_oficina():
@@ -1337,33 +1365,37 @@ def dashboard():
 # =====================================================
 @dashboard_bp.route("/usuarios", methods=["GET"])
 def listar_usuarios():
-    oficina_id = request.args.get("oficina_id")
-    
-    # Se não tem oficina_id, retorna todos usuários (para tela de login)
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
-    
-    if oficina_id:
-        cursor.execute("""
-            SELECT id, nome, email, cargo, departamento, status, created_at, oficina_id
-            FROM usuarios
-            WHERE oficina_id = %s
-            ORDER BY nome
-        """, (oficina_id,))
-    else:
-        # Para tela de login - retorna todos usuários ativos
-        cursor.execute("""
-            SELECT id, nome, email, cargo, departamento, status, created_at, oficina_id
-            FROM usuarios
-            WHERE status = 'Ativo'
-            ORDER BY nome
-        """)
-    
-    dados = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    
-    return jsonify(dados)
+    try:
+        oficina_id = request.args.get("oficina_id")
+        
+        # Se não tem oficina_id, retorna todos usuários (para tela de login)
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        if oficina_id:
+            cursor.execute("""
+                SELECT id, nome, email, cargo, departamento, status, created_at, oficina_id
+                FROM usuarios
+                WHERE oficina_id = %s
+                ORDER BY nome
+            """, (oficina_id,))
+        else:
+            # Para tela de login - retorna todos usuários ativos
+            cursor.execute("""
+                SELECT id, nome, email, cargo, departamento, status, created_at, oficina_id
+                FROM usuarios
+                WHERE status = 'Ativo'
+                ORDER BY nome
+            """)
+        
+        dados = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        return jsonify(dados)
+    except Exception as e:
+        print(f"Erro ao listar usuários: {str(e)}")
+        return jsonify({"erro": f"Erro ao listar usuários: {str(e)}"}), 500
 
 @dashboard_bp.route("/login", methods=["POST"])
 def login_usuario():

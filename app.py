@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from database import dashboard_bp
 import os
@@ -9,27 +9,19 @@ load_dotenv()
 app = Flask(__name__)
 
 # Configurar CORS para aceitar requisições do frontend (incluindo Vercel)
-allowed_origins = [
-    "http://localhost:5173", 
-    "http://localhost:3000", 
-    "http://127.0.0.1:5173"
-]
-
-# Adicionar domínio do Vercel se configurado
-vercel_domain = os.getenv("FRONTEND_URL")
-if vercel_domain:
-    allowed_origins.append(vercel_domain)
-
+# Permitir todas as origens do Vercel temporariamente
 CORS(app, resources={
     r"/*": {
-        "origins": allowed_origins,
+        "origins": ["*"],  # Permitir todas as origens (temporário para debug)
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True
+        "allow_headers": ["Content-Type", "Authorization"]
     }
 })
 
 app.register_blueprint(dashboard_bp)
+
+# Para Vercel - exportar o app
+handler = app
 
 if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "False").lower() == "true"
