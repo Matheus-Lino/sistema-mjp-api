@@ -15,9 +15,7 @@ config = {
     "ssl_disabled": False,
     "ssl_verify_cert": False,
     "ssl_verify_identity": False,
-    "connect_timeout": 30,
-    "pool_size": 1,
-    "pool_reset_session": False
+    "connect_timeout": 30
 }
 
 # Remover valores None do config
